@@ -14,8 +14,8 @@ class EntityManager(object):
         return self._database
 
     # Return a new entity with the lowest GUID available. No stored references
-    def create_entity(self):
-        entity = Entity(self._next_guid)
+    def create_entity(self, symbol):
+        entity = Entity(self._next_guid, symbol)
         self._next_guid += 1
         return entity
 

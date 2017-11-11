@@ -9,7 +9,7 @@ class Physics(System):
 		System.__init__(self)
 
 	def init(self):
-		self.event_manager.subscribe("EVENT_moveEntity", self.attemptMove)
+		self.event_manager.subscribe("EVENT_MoveEntity", self.attemptMove)
 
 	def attemptMove(self, args):
 		entity = args["entity"]
@@ -22,7 +22,6 @@ class Physics(System):
 			for e, component in self.entity_manager.pairs_for_type(Transform2D):
 				if newPosition == component.position:
 					return
-
 
 			print("{0} + {1} = {2}".format(transform.position.x, vector2D.x, newPosition.x))
 			print("MOVING PLAYER TO [{0} ,{1}]".format(newPosition.x, newPosition.y))

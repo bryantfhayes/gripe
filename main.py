@@ -20,29 +20,33 @@ def init(game):
 
 def create_player(game):
     global player
-    player = game.entity_manager.create_entity()
+    player = game.entity_manager.create_entity('@')
     game.entity_manager.add_component(player, Transform2D())
     game.entity_manager.add_component(player, Health())
 
-    player_transform = game.entity_manager.component_for_entity(player, Transform2D)
-    print(player_transform.position.x)
 
 def onKeyPressed(args):
     char = args["char"]
     v = None
 
     if char == "UP":
-        v = Vector2D(1, 0)
-    elif char == "LEFT":
         v = Vector2D(0, -1)
-    elif char == "RIGHT":
-        v = Vector2D(0, 1)
-    elif char == "DOWN":
+    elif char == "LEFT":
         v = Vector2D(-1, 0)
+    elif char == "RIGHT":
+        v = Vector2D(1, 0)
+    elif char == "DOWN":
+        v = Vector2D(0, 1)
+    elif char == "F":
+        game.event_manager.fireEvent("EVENT_FocusCameraOnEntity", player)
+        return
+    elif char == "G":
+        game.event_manager.fireEvent("EVENT_FocusCameraOnEntity", None)
+        return
     else:
         return
 
-    game.event_manager.fireEvent("EVENT_moveEntity", {"entity" : player, "vector2D" : v})
+    game.event_manager.fireEvent("EVENT_MoveEntity", {"entity" : player, "vector2D" : v})
 
 def quitCallback(args):
     game.running = False
