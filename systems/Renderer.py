@@ -2,6 +2,10 @@ from systems.System import System
 
 from components.Transform2D import Transform2D
 
+from core.EventManager import EventManager
+from core.EntityManager import EntityManager
+from core.SystemManager import SystemManager
+
 from util.Vector2D import Vector2D
 from util.Misc import *
 import util.Colors as colors
@@ -11,7 +15,7 @@ import tdl, six
 class Panel(object):
     Right = 0
     Bottom = 1
-    def __init__(self, window, offsetX, offsetY, width, height, side, bounded=False):
+    def __init__(self, window, offsetX, offsetY, width, height, side, updateEvent, parent, bounded=False):
         self.window = window
         self.width = width
         self.height = height
@@ -19,9 +23,25 @@ class Panel(object):
         self.offsetY = offsetY
         self.bounded = bounded
         self.side = side
-        self.data = {"Hello World:" : {"color" : colors.red}}
-        print(offsetX, offsetY, width, height)
+        self.data = []
         self.console = tdl.Console(width, height)
+        self.updateEvent = updateEvent
+        self.parent = parent
+
+        # Register update func for updating data
+        if self.updateEvent != None:
+            EventManager.Instance().subscribe(self.updateEvent, self.updateData)
+
+    def updateData(self, data):
+        self.data = []
+        offset = len(data) - self.height
+        length = self.height
+        if (offset <= 0):
+            offset = 0
+            length = len(data)
+
+        for i in range(offset, length + offset):
+            self.data.append(data[i])
 
     def draw(self):
         if self.bounded:
@@ -29,20 +49,20 @@ class Panel(object):
 
         # Draw stuff on panel
         count = 0
-        for msg, fmt in six.iteritems(self.data):
-            self.console.draw_str(0, count, "{0}".format(msg), bg=None, fg=fmt["color"])
-            count += 1
+        for line in self.data:
+            for msg, fmt in six.iteritems(line):
+                self.console.draw_str(0, count, "{0}".format(msg), bg=None, fg=fmt["color"])
+                count += 1
 
         # Blit panel to main window
         self.window.blit(self.console, self.offsetX, self.offsetY, self.width, self.height)
 
 class GamePanel(Panel):
-    def __init__(self, window, offsetX, offsetY, width, height, parent, bounded=True):
-        Panel.__init__(self, window, offsetX, offsetY, width, height, bounded)
-        self.parent = parent
+    def __init__(self, window, offsetX, offsetY, width, height, updateEvent, parent, bounded=True):
+        Panel.__init__(self, window, offsetX, offsetY, width, height, updateEvent, parent, bounded)
 
     def draw(self):
-        for entity, transform in self.parent.entity_manager.pairs_for_type(Transform2D):
+        for entity, transform in EntityManager.Instance().pairs_for_type(Transform2D):
             position = transform.position + (self.parent.console_mid - self.parent.offset_transform.position)
 
             # Only draw characters within bounds of screen
@@ -71,7 +91,7 @@ class Renderer(System):
         self.offset_transform = Transform2D(self.console_mid)
 
         # Add initial game panel (panel[0] is main game always)
-        self.game_panel = GamePanel(self.window, 0, 0, self.screen_width, self.screen_height, self)
+        self.game_panel = GamePanel(self.window, 0, 0, self.screen_width, self.screen_height, None, None, self)
         self.panels = []
 
     def addPanel(self, panel):
@@ -80,11 +100,9 @@ class Renderer(System):
         # Shrink game panel to fit within upper left hand corner
         if panel.side == Panel.Right:
             if panel.offsetX < self.game_panel.width:
-                print("shrink x to: {}".format(panel.offsetX))
                 self.game_panel.width = panel.offsetX
         elif panel.side == Panel.Bottom:
             if panel.offsetY < self.game_panel.height:
-                print("shrink y to: {}".format(panel.offsetY))
                 self.game_panel.height = panel.offsetY
 
         # Setup game window center in relation to panel[0] (main game scene)
@@ -93,7 +111,7 @@ class Renderer(System):
 
     def init(self):
         # Register listener for setting camera focus
-        self.event_manager.subscribe("EVENT_FocusCameraOnEntity", self.setCameraFocus)
+        EventManager.Instance().subscribe("EVENT_FocusCameraOnEntity", self.setCameraFocus)
 
     def setCameraFocus(self, entity):
         if entity == None:

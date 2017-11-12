@@ -1,12 +1,12 @@
 from core.Events import *
+from core.Singleton import Singleton
 
+@Singleton
 class EventManager(object):
-	def __init__(self, gameManager, entityManager, systemManager):
-		self._game_manager = gameManager
-		self._entity_manager = entityManager
-		self._system_manager = systemManager
+	def __init__(self):
 		self._events = {}
 
+	def Init(self):
 		# For each possible event, create a list which will hold the subscribed functions to call
 		for e in EVENTS:
 			self._events[e] = []

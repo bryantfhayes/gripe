@@ -1,15 +1,18 @@
 from core.Exceptions import *
+from core.Singleton import Singleton
 
+@Singleton
 class SystemManager(object):
     def __init__(self):
         pass
     
     # A container and manager for :class:`ecs.models.System` objects.
-    def __init__(self, entity_manager):
+    def __init__(self):
+        pass
+        
+    def Init(self):
         self._systems = []
         self._system_types = {}
-        self._entity_manager = entity_manager
-        self._event_manager = None
 
     # Allow getting the list of systems but not directly setting it.
     @property
@@ -27,12 +30,7 @@ class SystemManager(object):
         system_type = type(system_instance)
         if system_type in self._system_types:
             raise DuplicateSystemTypeError(system_type)
-        if system_instance.system_manager is not None:
-            raise SystemAlreadyAddedToManagerError(
-                system_instance, self, system_instance.system_manager)
-        system_instance.entity_manager = self._entity_manager
-        system_instance.system_manager = self
-        system_instance.event_manager = self._event_manager
+
         system_instance.init()
 
         self._system_types[system_type] = system_instance
@@ -43,8 +41,6 @@ class SystemManager(object):
 
     def remove_system(self, system_type):
         system = self._system_types[system_type]
-        system.entity_manager = None
-        system.system_manager = None
         self._systems.remove(system)
         del self._system_types[system_type]
 

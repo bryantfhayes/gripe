@@ -1,4 +1,7 @@
 from core.GameManager import GameManager
+from core.EventManager import EventManager
+from core.SystemManager import SystemManager
+from core.EntityManager import EntityManager
 
 from systems.Input import Input
 from systems.Renderer import Renderer, Panel
@@ -11,36 +14,47 @@ from util.Vector2D import Vector2D
 import util.Colors as Colors
 
 player = None
-game = None
 
-def init(game):
+#
+# @brief Initialize the scene
+# 
+def init():
+    GameManager.Instance().Init()
+
     # Apply all sub-systems to system manager
-    game.system_manager.add_system(Input(), priority=0)
-    game.system_manager.add_system(Renderer(110, 50), priority=0)
-    game.system_manager.add_system(Physics(), priority=0)
+    SystemManager.Instance().add_system(Input(), priority=0)
+    SystemManager.Instance().add_system(Renderer(110, 50), priority=0)
+    SystemManager.Instance().add_system(Physics(), priority=0)
 
     # Setup GUI
-    renderer = game.system_manager.get_system_of_type(Renderer)
-    sidePanel = Panel(renderer.window, renderer.screen_width - 20, 0, 20, renderer.screen_height - 7, Panel.Right)
-    sidePanel.data = {"HP:  10/10" : {"color" : Colors.gold},
-                      "ATK: 10/10" : {"color" : Colors.gold},
-                      "DEF: 10/10" : {"color" : Colors.gold}}
-    renderer.addPanel(sidePanel)
+    renderer = SystemManager.Instance().get_system_of_type(Renderer)
 
-    msgPanel = Panel(renderer.window, 0, renderer.screen_height - 7, renderer.screen_width, 7, Panel.Bottom)
-    msgPanel.data = {"You were attacked by a rat and took 4 damage!" : {"color" : Colors.red}}
-    renderer.addPanel(msgPanel)
+    # Add panels
+    renderer.addPanel(Panel(renderer.window, renderer.screen_width - 20, 0, 20, renderer.screen_height - 7, Panel.Right, "EVENT_StatsUpdated", renderer))
+    EventManager.Instance().fireEvent("EVENT_StatsUpdated", [{"HP: 10/10" : {"color" : Colors.gold}},
+                                                             {"MP:  5/20" : {"color" : Colors.gold}}])
 
-def create_player(game):
+    renderer.addPanel(Panel(renderer.window, 0, renderer.screen_height - 7, renderer.screen_width, 7, Panel.Bottom, "EVENT_ConsoleMessageAdded", renderer))
+    GameManager.Instance().message("Hello, this is my first console message!")
+
+#
+# @brief Create the main player
+# 
+def create_player():
     global player
-    player = game.entity_manager.create_entity('@')
-    game.entity_manager.add_component(player, Transform2D())
-    game.entity_manager.add_component(player, Health())
+    player = EntityManager.Instance().create_entity('@')
+    EntityManager.Instance().add_component(player, Transform2D())
+    EntityManager.Instance().add_component(player, Health())
+    GameManager.Instance().message("Bryant entered the strange room hesitantly.", Colors.red)
 
-
+#
+# @brief Callback called when the user pressed a key
+# 
 def onKeyPressed(args):
     char = args["char"]
     v = None
+
+    GameManager.Instance().message("Bryant pressed a button: {}".format(char), Colors.green)
 
     if char == "UP":
         v = Vector2D(0, -1)
@@ -51,43 +65,46 @@ def onKeyPressed(args):
     elif char == "DOWN":
         v = Vector2D(0, 1)
     elif char == "F":
-        game.event_manager.fireEvent("EVENT_FocusCameraOnEntity", player)
+        EventManager.Instance().fireEvent("EVENT_FocusCameraOnEntity", player)
         return
     elif char == "G":
-        game.event_manager.fireEvent("EVENT_FocusCameraOnEntity", None)
+        EventManager.Instance().fireEvent("EVENT_FocusCameraOnEntity", None)
         return
     else:
         return
 
-    game.event_manager.fireEvent("EVENT_MoveEntity", {"entity" : player, "vector2D" : v})
+    EventManager.Instance().fireEvent("EVENT_MoveEntity", {"entity" : player, "vector2D" : v})
 
+#
+# @brief Quit the game
+# 
 def quitCallback(args):
-    game.running = False
+    GameManager.Instance().running = False
 
+#
+# @brief Entry Point
+# 
 def main():
-    global game, player
-
-    # Make an instance of game engine
-    game = GameManager()
+    global player
 
     # Setup game systems
-    init(game)
+    init()
 
     # DO GAME LOGIC STUFF #
 
     # Create a player
-    create_player(game)
+    create_player()
 
     # Get key presses
-    game.event_manager.subscribe("EVENT_KeyPressed", onKeyPressed)
+    EventManager.Instance().subscribe("EVENT_KeyPressed", onKeyPressed)
 
     # END GAME LOGIC STUFF #
 
     # Register game over callback on "Q" being pressed
-    game.event_manager.subscribe("EVENT_QuitGame", quitCallback)
+    EventManager.Instance().subscribe("EVENT_QuitGame", quitCallback)
 
     # Run game
-    game.run()
+    GameManager.Instance().run()
 
 if __name__ == "__main__":
     main()

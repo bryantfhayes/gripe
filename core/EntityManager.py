@@ -1,12 +1,16 @@
 from core.Entity import Entity
+from core.Singleton import Singleton
 
 import six
 
+@Singleton
 class EntityManager(object):
     def __init__(self):
+        pass
+
+    def Init(self):
         self._database = {}
         self._next_guid = 0
-        self.event_manager = None
 
     # Get this manager's database. Direct modification not permitted
     @property
