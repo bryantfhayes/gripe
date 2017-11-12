@@ -16,6 +16,12 @@ class SystemManager(object):
     def systems(self):
         return self._systems
 
+    def get_system_of_type(self, system_type):
+        if system_type in self._system_types:
+            return self._system_types[system_type]
+        else:
+            return None
+
     # Add a sub-system to the system manager
     def add_system(self, system_instance, priority=0):
         system_type = type(system_instance)

@@ -1,13 +1,14 @@
 from core.GameManager import GameManager
 
 from systems.Input import Input
-from systems.Renderer import Renderer
+from systems.Renderer import Renderer, Panel
 from systems.Physics import Physics
 
 from components.Transform2D import Transform2D
 from components.Health import Health
 
 from util.Vector2D import Vector2D
+import util.Colors as Colors
 
 player = None
 game = None
@@ -15,8 +16,20 @@ game = None
 def init(game):
     # Apply all sub-systems to system manager
     game.system_manager.add_system(Input(), priority=0)
-    game.system_manager.add_system(Renderer(50, 30), priority=0)
+    game.system_manager.add_system(Renderer(110, 50), priority=0)
     game.system_manager.add_system(Physics(), priority=0)
+
+    # Setup GUI
+    renderer = game.system_manager.get_system_of_type(Renderer)
+    sidePanel = Panel(renderer.window, renderer.screen_width - 20, 0, 20, renderer.screen_height - 7, Panel.Right)
+    sidePanel.data = {"HP:  10/10" : {"color" : Colors.gold},
+                      "ATK: 10/10" : {"color" : Colors.gold},
+                      "DEF: 10/10" : {"color" : Colors.gold}}
+    renderer.addPanel(sidePanel)
+
+    msgPanel = Panel(renderer.window, 0, renderer.screen_height - 7, renderer.screen_width, 7, Panel.Bottom)
+    msgPanel.data = {"You were attacked by a rat and took 4 damage!" : {"color" : Colors.red}}
+    renderer.addPanel(msgPanel)
 
 def create_player(game):
     global player
