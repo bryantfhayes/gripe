@@ -9,6 +9,7 @@ from systems.Physics import Physics
 
 from components.Transform2D import Transform2D
 from components.Health import Health
+from components.Collider import *
 
 from util.Vector2D import Vector2D
 import util.Colors as Colors
@@ -42,9 +43,10 @@ def init():
 # 
 def create_player():
     global player
-    player = EntityManager.Instance().create_entity('@')
-    EntityManager.Instance().add_component(player, Transform2D())
+    player = EntityManager.Instance().create_entity('@', z=10)
+    EntityManager.Instance().add_component(player, Transform2D(Vector2D(10, 10)))
     EntityManager.Instance().add_component(player, Health())
+    EntityManager.Instance().add_component(player, Collider(COLLIDER_PLAYER, COLLIDER_PLAYER | COLLIDER_WALL))
     GameManager.Instance().message("Bryant entered the strange room hesitantly.", Colors.red)
 
 #
@@ -75,6 +77,18 @@ def onKeyPressed(args):
 
     EventManager.Instance().fireEvent("EVENT_MoveEntity", {"entity" : player, "vector2D" : v})
 
+def load_map(filename):
+    mapArr = []
+    count = 0
+    with open(filename, 'r') as fp:
+        lines = fp.readlines()
+        for line in lines:
+            mapArr.append([])
+            for char in line.strip('\n'):
+                mapArr[count].append(char)
+            count += 1
+    GameManager.Instance().loadMap(mapArr)
+
 #
 # @brief Quit the game
 # 
@@ -94,6 +108,9 @@ def main():
 
     # Create a player
     create_player()
+
+    # Load map
+    load_map("assets/level_1.txt")
 
     # Get key presses
     EventManager.Instance().subscribe("EVENT_KeyPressed", onKeyPressed)

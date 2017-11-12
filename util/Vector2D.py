@@ -8,3 +8,9 @@ class Vector2D(object):
 
 	def __sub__(self, other):
 		return Vector2D(self.x - other.x, self.y - other.y)
+
+	def __eq__(self, other):
+		if self.x == other.x and self.y == other.y:
+			return True
+		else:
+			return False

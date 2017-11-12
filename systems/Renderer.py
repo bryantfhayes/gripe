@@ -62,12 +62,17 @@ class GamePanel(Panel):
         Panel.__init__(self, window, offsetX, offsetY, width, height, updateEvent, parent, bounded)
 
     def draw(self):
+        zCache = {}
         for entity, transform in EntityManager.Instance().pairs_for_type(Transform2D):
             position = transform.position + (self.parent.console_mid - self.parent.offset_transform.position)
 
             # Only draw characters within bounds of screen
             if vectorInRange(position, 0, self.width, 0, self.height):
-                self.console.draw_char(position.x, position.y, entity.symbol)
+                key = "{0},{1}".format(transform.position.x, transform.position.y)
+                if key not in zCache or entity.z >= zCache[key]:
+                    self.console.draw_char(position.x, position.y, entity.symbol)
+                    zCache[key] = entity.z
+
 
         # Blit the contents of "console" to the root console
         self.window.blit(self.console, 0, 0, self.width, self.height, 0, 0)
